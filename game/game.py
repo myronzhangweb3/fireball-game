@@ -60,7 +60,7 @@ class Game:
         self.animation_time = 0
 
         self.window_name = 'Fireball Game'
-        cv2.namedWindow(self.window_name, cv2.WND_PROP_FULLSCREEN)
+        cv2.namedWindow(self.window_name, cv2.WINDOW_NORMAL)
         cv2.setWindowProperty(self.window_name, cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
 
         self.last_wrist_z_p1 = None
@@ -68,6 +68,7 @@ class Game:
         self.debug_data_p1 = {}
         self.debug_data_p2 = {}
         self.game_mode = self.show_mode_selection()
+        self.paused = False # Added for pause functionality
 
         # --- 音效加载 ---
         pygame.mixer.music.load(SOUND_BACKGROUND)
@@ -137,12 +138,29 @@ class Game:
             frame = zoom_frame(frame, CAMERA_ZOOM)
             frame = cv2.flip(frame, 1)
 
+            key = cv2.waitKey(5) & 0xFF
+            if key == ord(' '): # Spacebar to toggle pause
+                self.paused = not self.paused
+                if self.paused:
+                    pygame.mixer.music.pause()
+                else:
+                    pygame.mixer.music.unpause()
+            elif key == ord('q'):
+                break
+
             if self.game_over_state:
-                key = cv2.waitKey(0)
                 if key == ord('r'):
                     self.reset_game()
-                elif key == ord('q'):
-                    break
+            elif self.paused:
+                # Display PAUSED overlay
+                overlay = frame.copy()
+                cv2.rectangle(overlay, (0, 0), (self.frame_width, self.frame_height), (0, 0, 0), -1)
+                cv2.addWeighted(overlay, 0.6, frame, 0.4, 0, frame)
+                text = "PAUSED"
+                text_size = cv2.getTextSize(text, cv2.FONT_HERSHEY_TRIPLEX, 3, 5)[0]
+                text_x = (self.frame_width - text_size[0]) // 2
+                text_y = (self.frame_height + text_size[1]) // 2
+                cv2.putText(frame, text, (text_x, text_y), cv2.FONT_HERSHEY_TRIPLEX, 3, (255, 255, 255), 5)
             else:
                 if self.game_mode == 'single':
                     self.run_single_player(frame)
@@ -150,9 +168,6 @@ class Game:
                     self.run_two_player(frame)
 
             cv2.imshow(self.window_name, frame)
-
-            if cv2.waitKey(5) & 0xFF == ord('q'):
-                break
         
         self.cleanup()
 
@@ -442,10 +457,10 @@ class Game:
         if player_landmarks:
             heart_pos = self.get_heart_position(player_landmarks.landmark)
             draw_heart(frame, heart_pos, HEART_RADIUS // 3, (0, 0, 255))
-            draw_centered_text(frame, "Player", heart_pos, HEART_RADIUS // 2)
+            draw_centered_text(frame, "Player", heart_pos, HEART_RADIUS * 4)
 
         draw_heart(frame, self.ai_heart_pos, HEART_RADIUS // 3, (255, 0, 0))
-        draw_centered_text(frame, "AI", self.ai_heart_pos, HEART_RADIUS // 2)
+        draw_centered_text(frame, "AI", self.ai_heart_pos, HEART_RADIUS * 4)
         if self.game_over_state:
             text = f"{self.winner} Wins!"
             text_size = cv2.getTextSize(text, cv2.FONT_HERSHEY_TRIPLEX, 3, 5)[0]
@@ -509,7 +524,7 @@ class Game:
         if player1_landmarks:
             heart_pos = self.get_heart_position(player1_landmarks.landmark, 0, mid_x)
             draw_heart(frame, heart_pos, HEART_RADIUS // 3, (0, 0, 255))
-            draw_centered_text(frame, "Player 1", heart_pos, HEART_RADIUS // 2)
+            draw_centered_text(frame, "Player 1", heart_pos, HEART_RADIUS * 4)
             
             # Check if player 1 is out of bounds
             if not (p1_top_left[0] < heart_pos[0] < p1_bottom_right[0] and \
@@ -524,7 +539,7 @@ class Game:
         if player2_landmarks:
             heart_pos = self.get_heart_position(player2_landmarks.landmark, mid_x, self.frame_width / 2)
             draw_heart(frame, heart_pos, HEART_RADIUS // 3, (255, 0, 0))
-            draw_centered_text(frame, "Player 2", heart_pos, HEART_RADIUS // 2)
+            draw_centered_text(frame, "Player 2", heart_pos, HEART_RADIUS * 4)
 
             # Check if player 2 is out of bounds
             if not (p2_top_left[0] < heart_pos[0] < p2_bottom_right[0] and \
