@@ -1,0 +1,8 @@
+.idea/
+.DS_Store
+.env
+logs/
+/dist/
+/docker-compose.yml
+/.env.docker
+/build/
