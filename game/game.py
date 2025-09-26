@@ -60,7 +60,7 @@ class Game:
         self.animation_time = 0
 
         self.window_name = 'Fireball Game'
-        cv2.namedWindow(self.window_name, cv2.WINDOW_NORMAL)
+        cv2.namedWindow(self.window_name, cv2.WND_PROP_FULLSCREEN)
         cv2.setWindowProperty(self.window_name, cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
 
         self.last_wrist_z_p1 = None
