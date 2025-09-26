@@ -131,6 +131,7 @@ class Game:
 
     def run(self):
         while self.cap.isOpened():
+            print(f"self.frame_height, self.frame_width: {self.frame_height, self.frame_width}")
             success, frame = self.cap.read()
             if not success:
                 continue
@@ -167,7 +168,9 @@ class Game:
                 else:
                     self.run_two_player(frame)
 
-            cv2.imshow(self.window_name, frame)
+            # Scale frame to screen resolution
+            frame_resized = cv2.resize(frame, (self.frame_width, self.frame_height))
+            cv2.imshow(self.window_name, frame_resized)
         
         self.cleanup()
 
