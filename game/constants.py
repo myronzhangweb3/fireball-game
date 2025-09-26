@@ -11,7 +11,7 @@ FIREBALL_RADIUS = 50    # 火球的半径
 
 # --- 游戏性 ---
 FIREBALL_SPEED = 50         # 火球飞行速度 (值越大, 速度越快)
-DEFAULT_HEALTH = 10         # 默认生命值
+DEFAULT_HEALTH = 2         # 默认生命值
 PLAYER_COOLDOWN = 0.5       # 玩家发射火球后的冷却时间 (秒)
 AI_MIN_COOLDOWN = 1.5       # AI发射火球的最小间隔时间 (秒)
 AI_MAX_COOLDOWN = 2.5       # AI发射火球的最大间隔时间 (秒)

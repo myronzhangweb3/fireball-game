@@ -69,6 +69,7 @@ class Game:
         self.debug_data_p2 = {}
         self.game_mode = self.show_mode_selection()
         self.paused = False # Added for pause functionality
+        self.show_exit_confirm = False # For ESC confirmation
 
         # --- 音效加载 ---
         pygame.mixer.music.load(SOUND_BACKGROUND)
@@ -123,7 +124,8 @@ class Game:
             cv2.putText(frame, 'Two Player', (two_player_pos[0] + 70, two_player_pos[1] + 65), cv2.FONT_HERSHEY_SIMPLEX, 1.5, (0, 0, 0), 3)
             
             cv2.imshow(self.window_name, frame)
-            if cv2.waitKey(1) & 0xFF == ord('q'):
+            key = cv2.waitKey(1) & 0xFF
+            if key == ord('q') or key == 27: # 'q' or ESC key to exit
                 exit()
         
         cv2.setMouseCallback(self.window_name, lambda *args: None)
@@ -140,32 +142,40 @@ class Game:
 
             key = cv2.waitKey(5) & 0xFF
             if key == ord(' '): # Spacebar to toggle pause
-                self.paused = not self.paused
-                if self.paused:
-                    pygame.mixer.music.pause()
+                if not self.show_exit_confirm:
+                    self.paused = not self.paused
+                    if self.paused:
+                        pygame.mixer.music.pause()
+                    else:
+                        pygame.mixer.music.unpause()
+            elif key == 27: # ESC key to show exit confirmation
+                if not self.show_exit_confirm:
+                    self.show_exit_confirm = True
                 else:
-                    pygame.mixer.music.unpause()
-            elif key == ord('q'):
+                    self.show_exit_confirm = False
+            elif key == ord('q'): # 'q' key to exit directly
                 break
+            elif key == ord('y') and self.show_exit_confirm: # Confirm exit
+                break
+            elif key == ord('n') and self.show_exit_confirm: # Cancel exit
+                self.show_exit_confirm = False
 
             if self.game_over_state:
                 if key == ord('r'):
                     self.reset_game()
             elif self.paused:
-                # Display PAUSED overlay
-                overlay = frame.copy()
-                cv2.rectangle(overlay, (0, 0), (self.frame_width, self.frame_height), (0, 0, 0), -1)
-                cv2.addWeighted(overlay, 0.6, frame, 0.4, 0, frame)
-                text = "PAUSED"
-                text_size = cv2.getTextSize(text, cv2.FONT_HERSHEY_TRIPLEX, 3, 5)[0]
-                text_x = (self.frame_width - text_size[0]) // 2
-                text_y = (self.frame_height + text_size[1]) // 2
-                cv2.putText(frame, text, (text_x, text_y), cv2.FONT_HERSHEY_TRIPLEX, 3, (255, 255, 255), 5)
+                self.draw_overlay_text(frame, "PAUSED", overlay_alpha=0.6)
             else:
                 if self.game_mode == 'single':
                     self.run_single_player(frame)
                 else:
                     self.run_two_player(frame)
+
+            # Display exit confirmation dialog if needed
+            if self.show_exit_confirm:
+                self.draw_overlay_text(frame, "Exit Game?",
+                                     "Press 'Y' to exit, 'N' to cancel, or ESC to toggle",
+                                     main_scale=2, main_thickness=4)
 
             # Scale frame to screen resolution
             frame_resized = cv2.resize(frame, (self.frame_width, self.frame_height))
@@ -449,19 +459,38 @@ class Game:
         draw_heart(frame, self.ai_heart_pos, HEART_RADIUS // 3, (255, 0, 0))
         draw_centered_text(frame, "AI", self.ai_heart_pos, HEART_RADIUS * 4)
         if self.game_over_state:
-            text = f"{self.winner} Wins!"
-            text_size = cv2.getTextSize(text, cv2.FONT_HERSHEY_TRIPLEX, 3, 5)[0]
-            text_x = (self.frame_width - text_size[0]) // 2
-            text_y = (self.frame_height + text_size[1]) // 2
-            cv2.putText(frame, text, (text_x, text_y), cv2.FONT_HERSHEY_TRIPLEX, 3, (0, 255, 0), 5)
+            self.draw_overlay_text(frame, f"{self.winner} Wins!", "Press 'r' to restart",
+                                 main_color=(0, 255, 0), overlay_alpha=0.5)
 
-            # 添加重新开始游戏的提示
-            restart_text = "Press 'r' to restart"
-            restart_text_size = cv2.getTextSize(restart_text, cv2.FONT_HERSHEY_SIMPLEX, 1, 2)[0]
-            restart_text_x = (self.frame_width - restart_text_size[0]) // 2
-            restart_text_y = text_y + restart_text_size[1] + 40
-            cv2.putText(frame, restart_text, (restart_text_x, restart_text_y), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
 
+    def draw_overlay_text(self, frame, main_text, sub_text=None, main_font=cv2.FONT_HERSHEY_TRIPLEX,
+                         main_scale=3, main_thickness=5, main_color=(255, 255, 255),
+                         sub_font=cv2.FONT_HERSHEY_SIMPLEX, sub_scale=1, sub_thickness=2,
+                         sub_color=(200, 200, 200), overlay_alpha=0.7, spacing=50):
+        """
+        Display overlay text with optional subtitle
+        """
+        # Create overlay
+        overlay = frame.copy()
+        cv2.rectangle(overlay, (0, 0), (self.frame_width, self.frame_height), (0, 0, 0), -1)
+        cv2.addWeighted(overlay, overlay_alpha, frame, 1 - overlay_alpha, 0, frame)
+
+        # Main text
+        main_text_size = cv2.getTextSize(main_text, main_font, main_scale, main_thickness)[0]
+        main_text_x = (self.frame_width - main_text_size[0]) // 2
+        main_text_y = (self.frame_height - main_text_size[1]) // 2
+
+        if sub_text:
+            main_text_y -= spacing // 2
+
+        cv2.putText(frame, main_text, (main_text_x, main_text_y), main_font, main_scale, main_color, main_thickness)
+
+        # Sub text if provided
+        if sub_text:
+            sub_text_size = cv2.getTextSize(sub_text, sub_font, sub_scale, sub_thickness)[0]
+            sub_text_x = (self.frame_width - sub_text_size[0]) // 2
+            sub_text_y = main_text_y + main_text_size[1] + spacing
+            cv2.putText(frame, sub_text, (sub_text_x, sub_text_y), sub_font, sub_scale, sub_color, sub_thickness)
 
     def reset_game(self):
         self.fireballs = []
@@ -538,11 +567,8 @@ class Game:
                             cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 3)
 
         if self.game_over_state:
-            text = f"{self.winner} Wins!"
-            text_size = cv2.getTextSize(text, cv2.FONT_HERSHEY_TRIPLEX, 3, 5)[0]
-            text_x = (self.frame_width - text_size[0]) // 2
-            text_y = (self.frame_height + text_size[1]) // 2
-            cv2.putText(frame, text, (text_x, text_y), cv2.FONT_HERSHEY_TRIPLEX, 3, (0, 255, 0), 5)
+            self.draw_overlay_text(frame, f"{self.winner} Wins!", "Press 'r' to restart",
+                                 main_color=(0, 255, 0), overlay_alpha=0.5)
 
     def draw_debug_info_single_player(self, frame):
         y_pos = 30
