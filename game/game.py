@@ -131,7 +131,6 @@ class Game:
 
     def run(self):
         while self.cap.isOpened():
-            print(f"self.frame_height, self.frame_width: {self.frame_height, self.frame_width}")
             success, frame = self.cap.read()
             if not success:
                 continue
@@ -183,11 +182,6 @@ class Game:
         player_landmarks = None
         if results.pose_landmarks:
             player_landmarks = results.pose_landmarks
-            # self.mp_drawing.draw_landmarks(
-            #     frame, player_landmarks, self.mp_pose.POSE_CONNECTIONS,
-            #     self.mp_drawing.DrawingSpec(color=(245, 117, 66), thickness=2, circle_radius=2),
-            #     self.mp_drawing.DrawingSpec(color=(245, 66, 230), thickness=2, circle_radius=2)
-            # )
 
         if player_landmarks:
             self.handle_player_input(player_landmarks, 'player1')
@@ -218,20 +212,10 @@ class Game:
         player1_landmarks = None
         if results_p1.pose_landmarks:
             player1_landmarks = results_p1.pose_landmarks
-            # self.mp_drawing.draw_landmarks(
-            #     frame_p1, player1_landmarks, self.mp_pose.POSE_CONNECTIONS,
-            #     self.mp_drawing.DrawingSpec(color=(245, 117, 66), thickness=2, circle_radius=2),
-            #     self.mp_drawing.DrawingSpec(color=(245, 66, 230), thickness=2, circle_radius=2)
-            # )
 
         player2_landmarks = None
         if results_p2.pose_landmarks:
             player2_landmarks = results_p2.pose_landmarks
-            # self.mp_drawing.draw_landmarks(
-            #     frame_p2, player2_landmarks, self.mp_pose.POSE_CONNECTIONS,
-            #     self.mp_drawing.DrawingSpec(color=(66, 245, 117), thickness=2, circle_radius=2),
-            #     self.mp_drawing.DrawingSpec(color=(230, 66, 245), thickness=2, circle_radius=2)
-            # )
 
         if player1_landmarks:
             self.handle_player_input(player1_landmarks, 'player1')
@@ -708,6 +692,3 @@ class Game:
         self.cap.release()
         cv2.destroyAllWindows()
 
-if __name__ == '__main__':
-    game = Game()
-    game.run()
