@@ -163,6 +163,8 @@ class Game:
             if self.game_over_state:
                 if key == ord('r'):
                     self.reset_game()
+                self.draw_overlay_text(frame, f"{self.winner if self.winner else ''} Wins!", "Press 'r' to restart",
+                                       main_color=(0, 255, 0), overlay_alpha=0.5)
             elif self.paused:
                 self.draw_overlay_text(frame, "PAUSED", overlay_alpha=0.6)
             else:
@@ -458,10 +460,6 @@ class Game:
 
         draw_heart(frame, self.ai_heart_pos, HEART_RADIUS // 3, (255, 0, 0))
         draw_centered_text(frame, "AI", self.ai_heart_pos, HEART_RADIUS * 4)
-        if self.game_over_state:
-            self.draw_overlay_text(frame, f"{self.winner} Wins!", "Press 'r' to restart",
-                                 main_color=(0, 255, 0), overlay_alpha=0.5)
-
 
     def draw_overlay_text(self, frame, main_text, sub_text=None, main_font=cv2.FONT_HERSHEY_TRIPLEX,
                          main_scale=3, main_thickness=5, main_color=(255, 255, 255),
